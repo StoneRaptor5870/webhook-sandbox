@@ -51,7 +51,8 @@ export default function RequestSection({
         return JSON.stringify(JSON.parse(data), null, 2);
       }
       return JSON.stringify(data, null, 2);
-    } catch (_: unknown) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (err) {
       return typeof data === "string" ? data : JSON.stringify(data);
     }
   };

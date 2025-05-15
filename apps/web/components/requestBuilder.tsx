@@ -266,6 +266,7 @@ export default function RequestBuilder({
           message: `Request failed with status: ${response.status}`,
         });
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err: any) {
       setRequestStatus({
         success: false,

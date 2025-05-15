@@ -11,7 +11,8 @@ export default function CreateEndpointPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(24);
-  const [isPersistent, _unused] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [isPersistent, setIsPersistent] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
 
