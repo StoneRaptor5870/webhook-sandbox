@@ -12,6 +12,7 @@ import { setupCleanupCronJob } from "./cron/cleanup";
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', true);
 const server = http.createServer(app);
 export const { io, emitWebhookEvent } = setupSocketIO(server);
 
