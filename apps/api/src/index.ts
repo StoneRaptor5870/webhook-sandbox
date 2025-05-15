@@ -7,6 +7,7 @@ import db from "./db/prisma";
 import redis from "./db/redis";
 import hooksRouter from "./routes/hooks";
 import endpointsRouter from "./routes/endPoints";
+import { setupCleanupCronJob } from "./cron/cleanup";
 
 dotenv.config();
 
@@ -52,6 +53,9 @@ async function startServer() {
     server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
     });
+
+    setupCleanupCronJob();
+    console.log(`🚀 Cron jobs initialized`);
   } catch (error) {
     console.error("❌ Failed to start server:", error);
     process.exit(1);

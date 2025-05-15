@@ -20,6 +20,7 @@ export async function createEndpoint(
 ): Promise<any> {
   try {
     const { name, description, duration = 24, persistent = false } = req.body;
+    const { ip } = req;
 
     // Generate unique slug for the endpoint
     const slug = await generateSlug(db);
@@ -39,6 +40,7 @@ export async function createEndpoint(
         description,
         expiresAt,
         isPersistent: persistent,
+        ownerId: ip
       },
     });
 
@@ -90,6 +92,7 @@ export async function getEndpoint(req: Request, res: Response): Promise<any> {
       createdAt: endpoint.createdAt,
       expiresAt: endpoint.expiresAt,
       isPersistent: endpoint.isPersistent,
+      ownerIp: endpoint.ownerId,
     });
   } catch (error) {
     console.error("Error fetching endpoint:", error);
