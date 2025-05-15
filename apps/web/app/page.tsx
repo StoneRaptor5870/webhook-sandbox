@@ -283,7 +283,7 @@ export default function HomePage() {
               </p>
               <p className="mt-8">
                 <span className="text-4xl font-extrabold text-gray-900">
-                  $9
+                  $4
                 </span>
                 <span className="text-base font-medium text-gray-500">
                   /month

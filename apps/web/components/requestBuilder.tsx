@@ -449,7 +449,7 @@ export default function RequestBuilder({
                         updateHeader(header.id, "key", e.target.value)
                       }
                       placeholder="Header name"
-                      className="block w-1/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-1/3 px-2 py-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                     <input
                       type="text"
@@ -458,7 +458,7 @@ export default function RequestBuilder({
                         updateHeader(header.id, "value", e.target.value)
                       }
                       placeholder="Value"
-                      className="block w-2/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-2/3 px-2 py-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                     <button
                       onClick={() => removeHeader(header.id)}
@@ -512,7 +512,7 @@ export default function RequestBuilder({
                         updateQueryParam(param.id, "key", e.target.value)
                       }
                       placeholder="Parameter name"
-                      className="block w-1/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-1/3 px-2 py-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                     <input
                       type="text"
@@ -521,7 +521,7 @@ export default function RequestBuilder({
                         updateQueryParam(param.id, "value", e.target.value)
                       }
                       placeholder="Value"
-                      className="block w-2/3 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                      className="block w-2/3 px-2 py-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                     />
                     <button
                       onClick={() => removeQueryParam(param.id)}
