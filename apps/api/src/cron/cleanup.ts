@@ -1,13 +1,20 @@
 import db from "../db/prisma";
 import cron from "node-cron";
 
+interface Endpoint {
+    id: string;
+    _count: {
+        requests: number;
+    };
+}[]
+
 async function cleanup() {
     const now = new Date();
 
     try {
         console.log(`[${now.toISOString()}] Starting cleanup of expired endpoints...`);
 
-        const expiredEndpointsInfo = await db.endpoint.findMany({
+        const expiredEndpointsInfo: Endpoint[] = await db.endpoint.findMany({
             where: {
                 expiresAt: {
                     lt: now
@@ -27,8 +34,8 @@ async function cleanup() {
             return;
         }
 
-        const totalRequests = expiredEndpointsInfo.reduce((sum, endpoint) => sum + endpoint._count.requests, 0);
-        const expiredIds = expiredEndpointsInfo.map(endpoint => endpoint.id);
+        const totalRequests = expiredEndpointsInfo.reduce((sum: number, endpoint: Endpoint) => sum + endpoint._count.requests, 0);
+        const expiredIds: string[] = expiredEndpointsInfo.map(endpoint => endpoint.id);
 
         const result = await db.endpoint.deleteMany({
             where: {
