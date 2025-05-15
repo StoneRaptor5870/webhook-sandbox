@@ -23,7 +23,7 @@ interface WebhookRequest {
   id: string;
   method: string;
   headers: Record<string, string>;
-  body: any;
+  body: Record<string, unknown>;
   queryParams: Record<string, string>;
   ip: string;
   userAgent: string;
@@ -100,8 +100,8 @@ export default function WebhookDetailPage() {
         }
         const requestsData: RequestsResponse = await requestsRes.json();
         setRequests(requestsData.requests);
-      } catch (err: any) {
-        setError(err.message || "An error occurred");
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
       }
@@ -137,7 +137,7 @@ export default function WebhookDetailPage() {
 
     // Connection events
     socket.on("connect", () => {
-      const socketId = socket.id;
+      // const socketId = socket.id;
       // addDebugMessage(`Socket connected with ID: ${socketId}`)
       setSocketConnected(true);
 
@@ -146,32 +146,32 @@ export default function WebhookDetailPage() {
       socket.emit("join", slug);
     });
 
-    socket.on("connect_error", (err) => {
-      // (`Socket connection error: ${err.message}`)
-    });
+    // socket.on("connect_error", (err) => {
+    //   (`Socket connection error: ${err.message}`)
+    // });
 
-    socket.on("disconnect", (reason) => {
-      // (`Socket disconnected: ${reason}`)
-      setSocketConnected(false);
-    });
+    // socket.on("disconnect", (reason) => {
+    //   (`Socket disconnected: ${reason}`)
+    //   setSocketConnected(false);
+    // });
 
-    socket.on("reconnect", (attemptNumber) => {
-      // addDebugMessage(`Socket reconnected after ${attemptNumber} attempts`)
-      socket.emit("join", slug);
-    });
+    // socket.on("reconnect", (attemptNumber) => {
+    //   (`Socket reconnected after ${attemptNumber} attempts`)
+    //   socket.emit("join", slug);
+    // });
 
-    socket.on("reconnect_attempt", (attemptNumber) => {
-      // (`Socket reconnection attempt ${attemptNumber}`)
-    });
+    // socket.on("reconnect_attempt", (attemptNumber) => {
+    //   (`Socket reconnection attempt ${attemptNumber}`)
+    // });
 
-    socket.on("error", (err) => {
-      // addDebugMessage(`Socket error: ${err}`)
-    });
+    // socket.on("error", (err) => {
+    //   (`Socket error: ${err}`)
+    // });
 
-    // Debug events to confirm room joining
-    socket.on("room_joined", (room) => {
-      // addDebugMessage(`Successfully joined room: ${room}`)
-    });
+    // // Debug events to confirm room joining
+    // socket.on("room_joined", (room) => {
+    //   // addDebugMessage(`Successfully joined room: ${room}`)
+    // });
 
     // Request events
     socket.on("new-request", handleNewRequest);
@@ -206,8 +206,13 @@ export default function WebhookDetailPage() {
 
       // Remove from state
       setRequests((prev) => prev.filter((req) => req.id !== requestId));
-    } catch (err: any) {
-      console.error("Error deleting request:", err);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Error deleting request:", err);
+      }
+      else {
+        console.error("Something went wrong. Please try again.");
+      }
     }
   };
 
@@ -223,7 +228,7 @@ export default function WebhookDetailPage() {
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${apiUrl}/api/endpoints/${slug}`, {
+      const res: Response = await fetch(`${apiUrl}/api/endpoints/${slug}`, {
         method: "DELETE",
       });
 
@@ -233,8 +238,13 @@ export default function WebhookDetailPage() {
 
       // Redirect to home page
       window.location.href = "/";
-    } catch (err: any) {
-      console.error("Error deleting endpoint:", err);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error("Error deleting endpoint:", err);
+      }
+      else {
+        console.error("Something went wrong. Please try again.");
+      }
     }
   };
 
