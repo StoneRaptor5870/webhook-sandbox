@@ -1,0 +1,41 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../../../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Endpoint {
+  id           String    @id @default(cuid())
+  slug         String    @unique
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  name         String?
+  description  String?
+  isPersistent Boolean   @default(false)
+  ownerId      String?   // For future auth integration
+  requests     Request[]
+
+  @@index([expiresAt])
+}
+
+model Request {
+  id          String   @id @default(cuid())
+  endpointId  String
+  endpoint    Endpoint @relation(fields: [endpointId], references: [id], onDelete: Cascade)
+  receivedAt  DateTime @default(now())
+  method      String
+  headers     Json
+  body        Json?
+  queryParams Json?
+  ip          String?
+  userAgent   String?
+  replayedTo  String?   // If the payload was replayed
+  createdAt   DateTime @default(now())
+
+  @@index([endpointId])
+  @@index([createdAt])
+}
