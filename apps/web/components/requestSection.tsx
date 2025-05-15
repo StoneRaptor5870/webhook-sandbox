@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
-import * as monaco from "@monaco-editor/react";
+import MonacoEditor, { OnMount } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 
 interface WebhookRequest {
   id: string;
   method: string;
   headers: Record<string, string>;
-  body: any;
+  body: Record<string, unknown>;
   queryParams: Record<string, string>;
   ip: string;
   userAgent: string;
@@ -31,7 +32,7 @@ export default function RequestSection({
     "body",
   );
   const [editorValue, setEditorValue] = useState<string>("");
-  const editorRef = useRef<any>(null);
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
 
   // Update editor content when selected request changes
   useEffect(() => {
@@ -44,19 +45,19 @@ export default function RequestSection({
   }, [selectedRequest]);
 
   // Format JSON for display
-  const formatJson = (data: any) => {
+  const formatJson = (data: Record<string, unknown> | string) => {
     try {
       if (typeof data === "string") {
         return JSON.stringify(JSON.parse(data), null, 2);
       }
       return JSON.stringify(data, null, 2);
-    } catch (e) {
+    } catch (_) {
       return typeof data === "string" ? data : JSON.stringify(data);
     }
   };
 
   // Handle editor mounting
-  const handleEditorDidMount = (editor: any) => {
+  const handleEditorDidMount: OnMount = (editor) => {
     editorRef.current = editor;
   };
 
@@ -83,7 +84,7 @@ export default function RequestSection({
         const formatted = JSON.stringify(parsed, null, 2);
         setEditorValue(formatted);
       } catch (err) {
-        console.error("Error formatting JSON:", err);
+        console.error("Error formatting JSON:", err instanceof Error ? err.message : err);
       }
     }
   };
@@ -240,7 +241,7 @@ export default function RequestSection({
                     </button>
                   </div>
                   <div className="bg-gray-50 rounded-md overflow-hidden">
-                    <monaco.default
+                    <MonacoEditor
                       height="300px"
                       language="json"
                       theme="vs-light"

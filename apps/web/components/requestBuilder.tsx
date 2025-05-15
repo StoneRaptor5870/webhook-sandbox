@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import * as monaco from "@monaco-editor/react";
+import MonacoEditor, { OnMount } from "@monaco-editor/react";
+import type { editor } from "monaco-editor";
 
 interface Endpoint {
   id: string;
@@ -52,7 +53,7 @@ export default function RequestBuilder({
   requestBuilderValue,
   setRequestBuilderValue,
 }: RequestBuilderProps) {
-  const requestBuilderEditorRef = useRef<any>(null);
+  const requestBuilderEditorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const [requestMethod, setRequestMethod] = useState<string>("POST");
   const [isSending, setIsSending] = useState<boolean>(false);
   const [requestStatus, setRequestStatus] = useState<{
@@ -87,7 +88,7 @@ export default function RequestBuilder({
   }, [requestStatus]);
 
   // Handle request builder editor mounting
-  const handleRequestBuilderEditorDidMount = (editor: any) => {
+  const handleRequestBuilderEditorDidMount: OnMount = (editor) => {
     requestBuilderEditorRef.current = editor;
   };
 
@@ -407,7 +408,7 @@ export default function RequestBuilder({
             </button>
           </div>
           <div className="bg-gray-50 rounded-md overflow-hidden">
-            <monaco.default
+            <MonacoEditor
               height="250px"
               language="json"
               theme="vs-light"
@@ -427,7 +428,7 @@ export default function RequestBuilder({
             />
           </div>
           <p className="mt-2 text-sm text-gray-500">
-            Edit the JSON body above and click "Send Request" to test your
+            Edit the JSON body above and click Send Request to test your
             webhook endpoint.
           </p>
         </div>

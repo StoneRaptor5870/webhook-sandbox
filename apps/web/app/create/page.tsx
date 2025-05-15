@@ -11,7 +11,7 @@ export default function CreateEndpointPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState(24);
-  const [isPersistent, _setIsPersistent] = useState(false);
+  const [isPersistent, _] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
 
@@ -135,7 +135,7 @@ export default function CreateEndpointPage() {
               />
             </div>
             <p className="mt-1 text-sm text-gray-500">
-              A brief description of what you&apos;'re testing
+              A brief description of what you are testing
             </p>
           </div>
 
