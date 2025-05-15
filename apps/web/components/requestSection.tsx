@@ -51,7 +51,7 @@ export default function RequestSection({
         return JSON.stringify(JSON.parse(data), null, 2);
       }
       return JSON.stringify(data, null, 2);
-    } catch (_) {
+    } catch (_: unknown) {
       return typeof data === "string" ? data : JSON.stringify(data);
     }
   };

@@ -19,7 +19,7 @@ interface WebhookRequest {
   id: string;
   method: string;
   headers: Record<string, string>;
-  body: any;
+  body: Record<string, unknown>;
   queryParams: Record<string, string>;
   ip: string;
   userAgent: string;
@@ -49,6 +49,7 @@ interface QueryParam {
 
 export default function RequestBuilder({
   endpoint,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onNewRequest,
   requestBuilderValue,
   setRequestBuilderValue,
@@ -100,6 +101,7 @@ export default function RequestBuilder({
         const parsed = JSON.parse(content);
         const formatted = JSON.stringify(parsed, null, 2);
         setRequestBuilderValue(formatted);
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (err) {
         setRequestStatus({
           success: false,
@@ -178,6 +180,7 @@ export default function RequestBuilder({
       });
 
       return url.toString();
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (err) {
       // If URL parsing fails, fall back to a simpler approach
       let baseUrl = customUrl;
@@ -237,6 +240,7 @@ export default function RequestBuilder({
             JSON.parse(requestBuilderValue);
             // Add validated body to request options
             requestOptions.body = requestBuilderValue;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
           } catch (err) {
             setRequestStatus({
               success: false,
@@ -329,11 +333,10 @@ export default function RequestBuilder({
 
       {requestStatus && (
         <div
-          className={`mb-4 p-3 rounded-md flex justify-between items-center ${
-            requestStatus.success
-              ? "bg-green-50 border border-green-200"
-              : "bg-red-50 border border-red-200"
-          }`}
+          className={`mb-4 p-3 rounded-md flex justify-between items-center ${requestStatus.success
+            ? "bg-green-50 border border-green-200"
+            : "bg-red-50 border border-red-200"
+            }`}
         >
           <p
             className={`text-sm ${requestStatus.success ? "text-green-700" : "text-red-700"}`}
@@ -364,31 +367,28 @@ export default function RequestBuilder({
       <div className="mb-4">
         <div className="flex space-x-4 border-b border-gray-200">
           <button
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === "body"
-                ? "text-indigo-600 border-b-2 border-indigo-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium ${activeTab === "body"
+              ? "text-indigo-600 border-b-2 border-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
             onClick={() => setActiveTab("body")}
           >
             Body
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === "headers"
-                ? "text-indigo-600 border-b-2 border-indigo-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium ${activeTab === "headers"
+              ? "text-indigo-600 border-b-2 border-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
             onClick={() => setActiveTab("headers")}
           >
             Headers
           </button>
           <button
-            className={`px-4 py-2 text-sm font-medium ${
-              activeTab === "query"
-                ? "text-indigo-600 border-b-2 border-indigo-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
+            className={`px-4 py-2 text-sm font-medium ${activeTab === "query"
+              ? "text-indigo-600 border-b-2 border-indigo-600"
+              : "text-gray-500 hover:text-gray-700"
+              }`}
             onClick={() => setActiveTab("query")}
           >
             Query Params
