@@ -25,7 +25,10 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
     // Extract request data
     const headers = req.headers;
     const method = req.method;
-    const ip = req.ip; // request.headers['x-forwarded-for']
+    const forwardedIp = req.headers['x-forwarded-for'] // req.ip
+    const ip = Array.isArray(forwardedIp) 
+      ? forwardedIp[0] 
+      : (forwardedIp?.split(',')[0]?.trim() || req.ip || 'unknown');
     const userAgent = req.get("user-agent") || "";
 
     // Handle different body types

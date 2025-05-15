@@ -20,10 +20,13 @@ export async function createEndpoint(
 ): Promise<any> {
   try {
     const { name, description, duration = 24, persistent = false } = req.body;
-    const { ip } = req;
+    const forwardedIp  = req.headers['x-forwarded-for']
 
     // Generate unique slug for the endpoint
     const slug = await generateSlug(db);
+    const ip = Array.isArray(forwardedIp) 
+      ? forwardedIp[0] 
+      : (forwardedIp?.split(',')[0]?.trim() || req.ip || 'unknown');
 
     // Calculate expiration date (default: 24 hours)
     const hoursToExpire = persistent
