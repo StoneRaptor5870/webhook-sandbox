@@ -26,8 +26,8 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
     const headers = req.headers;
     const method = req.method;
     const forwardedIp = req.headers['x-forwarded-for'] // req.ip
-    const ip = Array.isArray(forwardedIp) 
-      ? forwardedIp[0] 
+    const ip = Array.isArray(forwardedIp)
+      ? forwardedIp[0]
       : (forwardedIp?.split(',')[0]?.trim() || req.ip || 'unknown');
     const userAgent = req.get("user-agent") || "";
 
@@ -52,22 +52,49 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
       console.log(`Room ${slug} does not exist or has no clients`);
     }
 
-    // Create request record in database
-    const request = await db.request.create({
-      data: {
-        endpointId: endpoint.id,
-        method,
-        headers: headers as any,
-        body: body as any,
-        queryParams: req.query as any,
-        ip,
-        userAgent,
-      },
-      include: {
-        endpoint: {
-          select: { slug: true },
+    const { request } = await db.$transaction(async (tx) => {
+      if (endpoint.creatorIp) {
+        const ipRecord = await tx.ipRegistry.findUnique({
+          where: { ip: endpoint.creatorIp },
+        });
+
+        if (ipRecord !== null) {
+          if (ipRecord.requestUsage !== null) {
+            if (ipRecord.requestUsage <= 0) {
+              const error = new Error('Request limit reached for this endpoint');
+              (error as any).statusCode = 429;
+              throw error;
+            } else {
+              await tx.ipRegistry.update({
+                where: { ip: endpoint.creatorIp },
+                data: {
+                  lastSeen: new Date(),
+                  requestUsage: ipRecord.requestUsage - 1,
+                },
+              });
+            }
+          }
+        }
+      }
+
+      const request = await tx.request.create({
+        data: {
+          endpointId: endpoint.id,
+          method,
+          headers: headers as any,
+          body: body as any,
+          queryParams: req.query as any,
+          ip,
+          userAgent,
         },
-      },
+        include: {
+          endpoint: {
+            select: { slug: true },
+          },
+        },
+      });
+
+      return { request };
     });
 
     // Emit real-time event via Socket.io
@@ -100,8 +127,12 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
       message: "Webhook received successfully",
       requestId: request.id,
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error processing webhook:", error);
-    return res.status(500).json({ error: "Failed to process webhook" });
+    const statusCode = error.statusCode || 500;
+    const message =
+      error.message || "Request limit reached for this endpoint";
+
+    return res.status(statusCode).json({ error: message });
   }
 }

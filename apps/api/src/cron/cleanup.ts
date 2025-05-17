@@ -12,7 +12,7 @@ async function cleanup() {
     const now = new Date();
 
     try {
-        console.log(`[${now.toISOString()}] Starting cleanup of expired endpoints...`);
+        console.log(`[${now.toLocaleTimeString()}] Starting cleanup of expired endpoints...`);
 
         const expiredEndpointsInfo: Endpoint[] = await db.endpoint.findMany({
             where: {
@@ -30,7 +30,7 @@ async function cleanup() {
         });
 
         if(expiredEndpointsInfo.length === 0) {
-            console.log(`[${now.toISOString()}] No expired endpoints found.`);
+            console.log(`[${now.toLocaleTimeString()}] No expired endpoints found.`);
             return;
         }
 
@@ -43,16 +43,22 @@ async function cleanup() {
             }
         });
 
-        console.log(`[${now.toISOString()}] Successfully deleted ${result.count} expired endpoints and ${totalRequests} associated requests.`);
+        console.log(`[${now.toLocaleTimeString()}] Successfully deleted ${result.count} expired endpoints and ${totalRequests} associated requests.`);
     } catch (error) {
-        console.error(`[${now.toISOString()}] Error cleaning up expired endpoints:`, error);
+        console.error(`[${now.toLocaleTimeString()}] Error cleaning up expired endpoints:`, error);
     }
 }
 
-export function setupCleanupCronJob(cronSchedule = '*/30 * * * *') {  // every 30 min
-  cron.schedule(cronSchedule, () => {
-    cleanup();
-  });
-  
-  console.log(`🚀 Cleanup cron job scheduled with pattern: ${cronSchedule}`);
+export function setupCleanupCronJob(cronSchedule = '0,30 * * * *') {
+  try {
+    cron.schedule(cronSchedule, () => {
+      cleanup();
+    }, {
+        timezone: "UTC"
+    });
+
+    console.log(`🚀 Cleanup cron job scheduled with pattern: ${cronSchedule}`);
+  } catch (err) {
+    console.error("❌ Failed to schedule cron job:", err);
+  }
 }

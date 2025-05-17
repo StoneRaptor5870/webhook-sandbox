@@ -40,7 +40,8 @@ export default function CreateEndpointPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create endpoint");
+        console.log(errorData)
+        throw new Error(errorData.error);
       }
 
       const data = await response.json();

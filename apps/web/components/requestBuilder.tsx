@@ -261,9 +261,10 @@ export default function RequestBuilder({
         });
         // The socket will handle adding the new request to the list
       } else {
+        const body = await response.json();
         setRequestStatus({
           success: false,
-          message: `Request failed with status: ${response.status}`,
+          message: `Request failed with status: ${response.status} ${body.error}`,
         });
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

@@ -8,18 +8,56 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id            String      @id @default(cuid())
+  email         String      @unique
+  password      String
+  name          String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  accountTier   AccountTier @default(FREE)
+  endpointLimit Int         @default(1) // Increases with paid tiers
+  endpoints     Endpoint[]
+
+  @@index([email])
+}
+
+// Track anonymous IPs for free tier usage
+model IpRegistry {
+  ip              String   @id
+  firstSeen       DateTime @default(now())
+  lastSeen        DateTime @default(now())
+  usageCount      Int      @default(1)
+  endpointUsage   Int?      @default(1)
+  requestUsage    Int?      @default(3)
+  isBlocked       Boolean  @default(false)
+  convertedToUser Boolean  @default(false) // Track if this IP later created an account
+  userId          String? // Link to user if they create an account
+
+  @@index([isBlocked])
+}
+
 model Endpoint {
-  id           String    @id @default(cuid())
-  slug         String    @unique
-  createdAt    DateTime  @default(now())
-  expiresAt    DateTime
-  name         String?
-  description  String?
-  isPersistent Boolean   @default(false)
-  ownerId      String?   // For future auth integration
-  requests     Request[]
+  id              String    @id @default(cuid())
+  slug            String    @unique
+  createdAt       DateTime  @default(now())
+  expiresAt       DateTime
+  name            String
+  description     String?
+  isPersistent    Boolean   @default(false)
+  ownerId         String? // For future auth integration
+  User            User?     @relation(fields: [ownerId], references: [id])
+  creatorIp       String?
+  // Track if endpoint has been upgraded from anonymous to authenticated
+  wasAnonymous    Boolean   @default(false)
+  // For premium features
+  isPrivate       Boolean   @default(false) // Require authentication to access
+  hasCustomDomain Boolean   @default(false) // Use custom domain instead of your domain
+  requests        Request[]
 
   @@index([expiresAt])
+  @@index([ownerId])
+  @@index([creatorIp])
 }
 
 model Request {
@@ -33,9 +71,16 @@ model Request {
   queryParams Json?
   ip          String?
   userAgent   String?
-  replayedTo  String?   // If the payload was replayed
+  replayedTo  String? // If the payload was replayed
   createdAt   DateTime @default(now())
 
   @@index([endpointId])
   @@index([createdAt])
+}
+
+enum AccountTier {
+  FREE
+  PRO
+  BUSINESS
+  ENTERPRISE
 }

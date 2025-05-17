@@ -20,12 +20,12 @@ export async function createEndpoint(
 ): Promise<any> {
   try {
     const { name, description, duration = 24, persistent = false } = req.body;
-    const forwardedIp  = req.headers['x-forwarded-for']
+    const forwardedIp = req.headers['x-forwarded-for']
 
     // Generate unique slug for the endpoint
     const slug = await generateSlug(db);
-    const ip = Array.isArray(forwardedIp) 
-      ? forwardedIp[0] 
+    const ip = Array.isArray(forwardedIp)
+      ? forwardedIp[0]
       : (forwardedIp?.split(',')[0]?.trim() || req.ip || 'unknown');
 
     // Calculate expiration date (default: 24 hours)
@@ -35,17 +35,44 @@ export async function createEndpoint(
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + hoursToExpire);
 
-    // Create endpoint in database
-    const endpoint = await db.endpoint.create({
-      data: {
-        slug,
-        name: name || `Webhook ${slug}`,
-        description,
-        expiresAt,
-        isPersistent: persistent,
-        ownerId: ip
-      },
-    });
+    const { ipData, endpoint } = await db.$transaction(async (tx) => {
+      const existingIp = await tx.ipRegistry.findUnique({
+        where: { ip }
+      });
+
+      if (existingIp) {
+        // IP exists - check if they can create more endpoints
+        if (existingIp.endpointUsage == 0) {
+          const error = new Error("Endpoint creation limit reached for this IP");
+          (error as any).statusCode = 429;
+          throw error;
+        }
+      }
+
+      const ipData = await tx.ipRegistry.create({
+        data: {
+          ip: ip ? ip : '',
+          firstSeen: new Date(),
+          lastSeen: new Date(),
+          usageCount: 0,
+          endpointUsage: 0
+        }
+      })
+
+      // Create endpoint in database
+      const endpoint = await tx.endpoint.create({
+        data: {
+          slug,
+          name: name || `Webhook ${slug}`,
+          description,
+          expiresAt,
+          isPersistent: persistent,
+          creatorIp: ip
+        },
+      });
+
+      return { ipData, endpoint }
+    })
 
     // Store in Redis for quick access and automatic expiration
     const redisKey = `endpoint:${slug}`;
@@ -62,10 +89,15 @@ export async function createEndpoint(
       createdAt: endpoint.createdAt,
       expiresAt: endpoint.expiresAt,
       isPersistent: endpoint.isPersistent,
+      endpointUsage: ipData.usageCount
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error creating endpoint:", error);
-    return res.status(500).json({ error: "Failed to create endpoint" });
+    const statusCode = error.statusCode || 500;
+    const message =
+      error.message || "Failed to create endpoint";
+
+    return res.status(statusCode).json({ error: message });
   }
 }
 
@@ -94,8 +126,7 @@ export async function getEndpoint(req: Request, res: Response): Promise<any> {
       description: endpoint.description,
       createdAt: endpoint.createdAt,
       expiresAt: endpoint.expiresAt,
-      isPersistent: endpoint.isPersistent,
-      ownerIp: endpoint.ownerId,
+      isPersistent: endpoint.isPersistent
     });
   } catch (error) {
     console.error("Error fetching endpoint:", error);
