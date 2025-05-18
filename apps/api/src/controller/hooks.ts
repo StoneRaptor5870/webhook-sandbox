@@ -7,21 +7,6 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
   const { slug } = req.params;
 
   try {
-    // Find endpoint by slug
-    const endpoint = await db.endpoint.findUnique({
-      where: { slug },
-    });
-
-    // Return 404 if endpoint not found
-    if (!endpoint) {
-      return res.status(404).json({ error: "Endpoint not found" });
-    }
-
-    // Check if endpoint has expired
-    if (endpoint.expiresAt < new Date()) {
-      return res.status(410).json({ error: "Endpoint has expired" });
-    }
-
     // Extract request data
     const headers = req.headers;
     const method = req.method;
@@ -40,39 +25,47 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
       body = req.body ? JSON.stringify(req.body) : null;
     }
 
-    console.log(
-      `Processing webhook for endpoint ${slug} with method ${method}`,
-    );
+    // Find endpoint by slug
+    const endpointCheck = await db.endpoint.findUnique({
+      where: { slug },
+    });
 
-    // Log Socket.io rooms status
-    if (io.sockets.adapter.rooms.has(slug!)) {
-      const roomSize = io.sockets.adapter.rooms.get(slug!)?.size || 0;
-      console.log(`Room ${slug} exists with ${roomSize} client(s) connected`);
-    } else {
-      console.log(`Room ${slug} does not exist or has no clients`);
+    if (!endpointCheck) {
+      return res.status(404).json({ error: "Endpoint not found" });
     }
 
-    const { request } = await db.$transaction(async (tx) => {
+    if (endpointCheck.expiresAt < new Date()) {
+      return res.status(410).json({ error: "Endpoint has expired" });
+    }
+
+    const { request, endpoint } = await db.$transaction(async (tx) => {
+      const endpoint = await tx.endpoint.findUnique({
+        where: { slug },
+      });
+
+      if (!endpoint) {
+        throw new Error("Endpoint not found");
+      }
+
+      // Check usage limits
       if (endpoint.creatorIp) {
         const ipRecord = await tx.ipRegistry.findUnique({
           where: { ip: endpoint.creatorIp },
         });
 
-        if (ipRecord !== null) {
-          if (ipRecord.requestUsage !== null) {
-            if (ipRecord.requestUsage <= 0) {
-              const error = new Error('Request limit reached for this endpoint');
-              (error as any).statusCode = 429;
-              throw error;
-            } else {
-              await tx.ipRegistry.update({
-                where: { ip: endpoint.creatorIp },
-                data: {
-                  lastSeen: new Date(),
-                  requestUsage: ipRecord.requestUsage - 1,
-                },
-              });
-            }
+        if (ipRecord) {
+          if (ipRecord.requestUsage <= 0) {
+            const error = new Error('Request limit reached for this endpoint, you have to upgrade to premium tier');
+            (error as any).statusCode = 429;
+            throw error;
+          } else {
+            await tx.ipRegistry.update({
+              where: { ip: endpoint.creatorIp },
+              data: {
+                lastSeen: new Date(),
+                requestUsage: ipRecord.requestUsage - 1,
+              },
+            });
           }
         }
       }
@@ -94,8 +87,20 @@ export async function allRoutes(req: Request, res: Response): Promise<any> {
         },
       });
 
-      return { request };
+      return { request, endpoint };
     });
+
+    console.log(
+      `Processing webhook for endpoint ${slug} with method ${method}`,
+    );
+
+    // Log Socket.io rooms status
+    if (io.sockets.adapter.rooms.has(slug!)) {
+      const roomSize = io.sockets.adapter.rooms.get(slug!)?.size || 0;
+      console.log(`Room ${slug} exists with ${roomSize} client(s) connected`);
+    } else {
+      console.log(`Room ${slug} does not exist or has no clients`);
+    }
 
     // Emit real-time event via Socket.io
     const requestData = {

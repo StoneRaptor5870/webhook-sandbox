@@ -26,7 +26,9 @@ export async function createEndpoint(
     const slug = await generateSlug(db);
     const ip = Array.isArray(forwardedIp)
       ? forwardedIp[0]
-      : (forwardedIp?.split(',')[0]?.trim() || req.ip || 'unknown');
+      : (forwardedIp?.split(',')[0]?.trim() || req.ip);
+
+    const safeIp = ip || 'unknown';
 
     // Calculate expiration date (default: 24 hours)
     const hoursToExpire = persistent
@@ -43,7 +45,7 @@ export async function createEndpoint(
       if (existingIp) {
         // IP exists - check if they can create more endpoints
         if (existingIp.endpointUsage == 0) {
-          const error = new Error("Endpoint creation limit reached for this IP");
+          const error = new Error("Endpoint creation limit reached for this IP, upgrade to premium tier");
           (error as any).statusCode = 429;
           throw error;
         }
@@ -51,7 +53,7 @@ export async function createEndpoint(
 
       const ipData = await tx.ipRegistry.create({
         data: {
-          ip: ip ? ip : '',
+          ip: safeIp,
           firstSeen: new Date(),
           lastSeen: new Date(),
           usageCount: 0,
@@ -67,7 +69,7 @@ export async function createEndpoint(
           description,
           expiresAt,
           isPersistent: persistent,
-          creatorIp: ip
+          creatorIp: safeIp
         },
       });
 

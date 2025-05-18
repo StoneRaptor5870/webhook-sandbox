@@ -28,8 +28,8 @@ model IpRegistry {
   firstSeen       DateTime @default(now())
   lastSeen        DateTime @default(now())
   usageCount      Int      @default(1)
-  endpointUsage   Int?      @default(1)
-  requestUsage    Int?      @default(3)
+  endpointUsage   Int      @default(1)
+  requestUsage    Int     @default(3)
   isBlocked       Boolean  @default(false)
   convertedToUser Boolean  @default(false) // Track if this IP later created an account
   userId          String? // Link to user if they create an account
@@ -47,7 +47,7 @@ model Endpoint {
   isPersistent    Boolean   @default(false)
   ownerId         String? // For future auth integration
   User            User?     @relation(fields: [ownerId], references: [id])
-  creatorIp       String?
+  creatorIp       String
   // Track if endpoint has been upgraded from anonymous to authenticated
   wasAnonymous    Boolean   @default(false)
   // For premium features
